@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Http\Requests\Auth\SignUpRequest;
+use App\Http\Requests\Auth\SignInRequest;
 
 class AuthController extends Controller
 {
@@ -38,6 +39,47 @@ class AuthController extends Controller
                     'code' => 200,
                     'status'=> 'success',
                     'message' => 'User created successfully.'
+                ],
+                'data' => [
+                    'user' => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'picture' => $user->picture,
+                    ],
+                    'access token' => [
+                        'token' => $token,
+                        'type' => 'Bearer',
+                        'expires_in' => strtotime('+' . auth()->factory()->getTTL() . ' minutes'),
+                    ]
+                ],
+        ]);
+    }
+
+    public function signIn(SignInRequest $request) 
+    {
+
+        $token = auth()->attempt($request->validated());
+
+        if (!$token)
+        {
+            return response()->json([
+                'meta' => [
+                    'code' => 401,
+                    'status' => 'error',
+                    'message' => 'Incorrect email or password',
+                ],
+                'data' => [],
+            ], 401);
+        }
+
+        $user = auth()->user();
+        // dd($user);
+
+        return response()->json([
+            'meta' => [
+                    'code' => 200,
+                    'status' => 'success',
+                    'message' => 'Signed in successfully',
                 ],
                 'data' => [
                     'user' => [
