@@ -96,17 +96,41 @@ class AuthController extends Controller
         ]);
     }
 
-    public function signOut()
+    public function refresh()
     {
-        auth()->logout();
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'meta' => [
+                    'code' => 401,
+                    'status' => 'error',
+                    'message' => 'User not authenticated',
+                ],
+                'data' => [],
+            ], 401);
+        }
+
+        $token = auth()->fromUser($user);
 
         return response()->json([
             'meta' => [
                 'code' => 200,
                 'status' => 'success',
-                'message' => 'Signed out successfully',
+                'message' => 'Token refreshed successfully.',
             ],
-            'data' => [],
+            'data' => [
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'picture' => $user->picture,
+                ],
+                'access_token' => [
+                    'token' => $token,
+                    'type' => 'Bearer',
+                    'expires_in' => strtotime('+' . auth()->factory()->getTTL() . ' minutes'),
+                ]
+            ],
         ]);
     }
 }
