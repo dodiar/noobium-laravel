@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Me;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Me\Article\StoreRequest;
-use App\Models\Article;
+use App\Http\Requests\Me\Article\UpdateRequest;
 use Str;
 use ImageKit\ImageKit;
 use App\Models\User;
+use App\Models\Article;
 
 class ArticleController extends Controller
 {
@@ -140,5 +141,105 @@ class ArticleController extends Controller
             ],
             'data' =>[]
         ], 404);
+    }
+
+    public function update(UpdateRequest $request, $id)
+    {
+        // category_id
+        // title
+        // Content
+        // featured_image
+
+        // Get article berdasarkan id
+        // Cek apakah get article berhasil
+        // Jika berhasil get article
+        // Get user yang sedang login
+        // Cek apakah user id article sama dengan id user yang login
+        // jika iya, maka get semua request yang valid generate slug dari title
+        // Generate content preview berdasarkan content
+        // Lalu cek apakah ada request featured image
+        // Jika iya, maka upload file gambar ke ImageKit
+        // Get url hasil upload dari ImageKit
+        // Lakukan Update article dengan request valid dengan hasil data yang kita generate di auto controller\
+        // Cek apakah update article berhasil
+        // jika iya, maka kembalikan response success
+        // ( Jika line ini dieksekusi artinya tidak berhasil update article) kembalikan response error 500, gagal update article
+        // ( Jika line ini dieksekusi artinya article ini bukan milik user yg login) kembalikan response eror 401, unauthorized
+        // ( Jika line ini dieksekusi artinya tidak berhasil get article ) kembalikan response 404, Artcle tidak ditemukan
+
+        $article = Article::find($id);
+
+        if ($article)
+        {
+            $userId = auth()->id();
+
+            if ($article->user_id === $userId)
+            {
+                $validated = $request->validated();
+
+                $validated['slug'] = Str::of($validated['title'])->slug('-') . '-' . time();
+                $validated['content_preview'] = substr($validated['content'], 0, 218) . '...';
+
+                if ($request->hasFile('featured_image'))
+                {
+                    $imageKit = new ImageKit(
+                        env('IMAGEKIT_PUBLIC_KEY'),
+                        env('IMAGEKIT_PRIVATE_KEY'),
+                        env('IMAGEKIT_URL_ENDPOINT'),
+                    );
+
+                    $image = base64_encode(file_get_contents($request->file('featured_image')));
+
+                    $uploadImage = $imageKit->uploadFile([
+                        'file' => $image,
+                        'fileName' => $validated['slug'],
+                        'folder' => '/article',
+                    ]);
+
+                    $validated['featured_image'] = $uploadImage->result->url;
+                }
+
+                $updateArticle = $article->update($validated);
+
+                if ($updateArticle)
+                {
+                    return response()->json([
+                        'meta' => [
+                            'code' => 200,
+                            'status' => 'success',
+                            'message' => 'Article updated successfully.',
+                        ],
+                        'data' =>[],
+                    ]);
+
+                    return response()->json([
+                        'meta' => [
+                            'code' => 500,
+                            'status' => 'error',
+                            'message' => 'Error article failed to update.',
+                        ],
+                        'data' => [],
+                    ], 500);
+                }
+
+            return response()->json([
+                'meta' => [
+                    'code' => 401,
+                    'status' => 'error',
+                    'message' => 'Unauthorized',
+                ],
+                'data' => [],
+            ],401);
+            }
+
+        return response()->json([
+            'meta' => [
+                'code' => 404,
+                'status'=> 'error',
+                'messgare' => 'Article not found.',
+            ],
+            'data'=>[],
+        ], 404);
+        }
     }
 }
