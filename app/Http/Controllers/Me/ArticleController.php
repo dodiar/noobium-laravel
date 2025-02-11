@@ -5,12 +5,45 @@ namespace App\Http\Controllers\Me;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\Me\Article\StoreRequest;
+use App\Models\Article;
 use Str;
 use ImageKit\ImageKit;
 use App\Models\User;
 
 class ArticleController extends Controller
 {
+    public function index()
+    {
+        // Get user id yang saat ini sedang login
+        // Get article dimana user id nya yang saat ini sedang login
+        // Get juga category dan uzernya siapa
+        // Buat pagination nya
+        $userId = auth()->id();
+
+        $articles = Article::with(['category', 'user:id,name,email,picture'])->select([
+            'id', 
+            'user_id', 
+            'category_id', 
+            'title', 
+            'slug', 
+            'content_preview', 
+            'featured_image', 
+            'created_at', 
+            'updated_at'
+        ])
+            ->where('user_id', $userId)
+            ->paginate();
+
+        return response()->json([
+            'meta' => [
+                'code' => 200,
+                'status' => 'success',
+                'message' => 'Articles fetched successfully.',
+            ],
+            'data' => $articles
+        ]);
+    }
+
     public function store(StoreRequest $request)
     {
         $validated = $request->validated();
