@@ -5,9 +5,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Me\ProfileController;
 use App\Http\Controllers\Me\ArticleController as MeArticleController;
+use App\Http\Controllers\CategoryController;
 
 Route::post('sign-up', [AuthController::class, 'signUp']);
 Route::post('sign-in', [AuthController::class, 'signIn']);
+
+Route::get('categories', [CategoryController::class, 'index']);
 
 Route::middleware('auth:api')->group(function() {
     Route::prefix('me')->group(function() {
