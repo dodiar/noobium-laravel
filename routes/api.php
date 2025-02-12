@@ -11,6 +11,7 @@ Route::post('sign-up', [AuthController::class, 'signUp']);
 Route::post('sign-in', [AuthController::class, 'signIn']);
 
 Route::get('categories', [CategoryController::class, 'index']);
+Route::get('categories/{category_slug}', [CategoryController::class, 'show']);
 
 Route::middleware('auth:api')->group(function() {
     Route::prefix('me')->group(function() {
